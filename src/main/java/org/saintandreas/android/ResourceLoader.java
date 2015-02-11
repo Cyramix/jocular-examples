@@ -62,7 +62,7 @@ public class ResourceLoader {
   }
 
   private final Map<Integer, ResourceData> resourceMap;
-  private final Map<String, String> stringMap;
+//  private final Map<String, String> stringMap;
 
   private ResourceLoader() {
     try {
@@ -80,7 +80,7 @@ public class ResourceLoader {
 //        Map<String, String> attrs = XmlUtil.getAttributeMap(n);
 //        attrs.get("name");
 //      }
-      stringMap = ImmutableMap.of();
+//      stringMap = ImmutableMap.of();
     } catch (SAXException | IOException | ParserConfigurationException e) {
       throw new IllegalStateException(e);
     }
@@ -121,8 +121,8 @@ public class ResourceLoader {
   }
   
   public Menu loadMenu(int id) {
-    ResourceData r = getResourceData(id);
-    Document d = getResourceDocument(r);
+//    ResourceData r = getResourceData(id);
+//    Document d = getResourceDocument(r);
     
     return null;
   }
@@ -151,13 +151,13 @@ public class ResourceLoader {
 //    return new String(getResourceBytes(r), Charsets.UTF_8);
 //  }
 
-  private static Document getResourceDocument(ResourceData r) {
-    try {
-      return XmlUtil.parseXmlStream(getResourceInputStream(r));
-    } catch (SAXException | IOException | ParserConfigurationException e) {
-      throw new IllegalStateException("Unable to load XML document", e);
-    }
-  }
+//  private static Document getResourceDocument(ResourceData r) {
+//    try {
+//      return XmlUtil.parseXmlStream(getResourceInputStream(r));
+//    } catch (SAXException | IOException | ParserConfigurationException e) {
+//      throw new IllegalStateException("Unable to load XML document", e);
+//    }
+//  }
   
   private static InputStream getResourceInputStream(ResourceData r) throws IOException {
     return new ByteArrayInputStream(getResourceBytes(r));

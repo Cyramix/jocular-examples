@@ -224,7 +224,7 @@ public class Font {
     mv.push();
     {
       mv.translate(new Vector2f(offset - d, -m.size.y));
-      mv.bind(textProgram);
+      textProgram.setUniform("ModelView", mv.top());
       // Render the item
       GL11.glDrawElements(GL11.GL_TRIANGLES, 6, GL11.GL_UNSIGNED_SHORT,
           m.indexOffset * 2);

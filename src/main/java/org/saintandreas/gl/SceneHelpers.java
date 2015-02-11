@@ -68,7 +68,7 @@ public class SceneHelpers {
     floorProgram.setUniform("Time", (float)Hmd.getTimeInSeconds());
     OpenGL.bindAll(floorProgram);
     floorTexture.bind();
-    floorGeometry.bindVertexArray();
+    floorGeometry.bind();
     floorGeometry.draw();
     Texture.unbind(GL_TEXTURE_2D);
     Program.clear();
@@ -87,7 +87,7 @@ public class SceneHelpers {
 
     cubeProgram.use();
     OpenGL.bindAll(cubeProgram);
-    cubeGeometry.bind();
+    cubeGeometry.bindVertexArray();
     cubeGeometry.draw();
     Program.clear();
     cubeGeometry.unbind();

@@ -5,23 +5,12 @@ import static org.lwjgl.opengl.GL14.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL31.*;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-
-import org.lwjgl.input.Controller;
-import org.lwjgl.input.Controllers;
-import org.lwjgl.input.Keyboard;
 import org.saintandreas.ExampleResource;
 import org.saintandreas.android.ResourceLoader;
 import org.saintandreas.gl.Geometry;
@@ -60,7 +49,7 @@ import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 
 public class VideoDemo extends RiftApp  {
-
+  
   public static void main(String[] args) {
     for (Handler h : LogManager.getLogManager().getLogger("").getHandlers()) {
       h.setLevel(Level.FINEST);
@@ -81,7 +70,8 @@ public class VideoDemo extends RiftApp  {
   // private static final String MEDIA_URL = "http://192.168.0.4/Videos/South.Park.S17E09.HDTV.x264-ASAP.%5bVTV%5d.mp4";
   // private static final String MEDIA_URL = "http://192.168.0.4/Videos/3D/Gravity.2013.1080p%203D.HDTV.x264.DTS-RARBG.mkv";
   // private static final String MEDIA_URL = "http://192.168.0.4/Videos/Movies/g/Ghost.In.The.Shell.3.Solid.State.Soceity.2006.dvdrip.ac3-atilla82.avi";
-  private static final String MEDIA_URL = "http://192.168.0.4/Videos/3D/TRON%20LEGACY%203D.mkv";
+  // private static final String MEDIA_URL = "http://192.168.0.4/Videos/3D/TRON%20LEGACY%203D.mkv";
+  private static final String MEDIA_URL = "http://192.168.0.4/Videos/3D/Guardians.of.the.Galaxy.2014.1080p.3D.HSBS.BluRay.x264.YIFY.mp4";
   // private static final String MEDIA_URL = "http://192.168.0.4/Videos/3D/Man.Of.Steel.3D.2013.1080p.BluRay.Half-OU.DTS.x264-PublicHD.mkv";
 
   @SuppressWarnings("unused")
@@ -89,7 +79,7 @@ public class VideoDemo extends RiftApp  {
 
   private static final LibVlc LIB_VLC; 
   static {
-    NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), "/Program Files/VideoLan/VLC");
+    NativeLibrary.addSearchPath(RuntimeUtil.getLibVlcLibraryName(), "/dev/vlc-2.1.5");
     Native.loadLibrary(RuntimeUtil.getLibVlcLibraryName(), LibVlc.class);
     LIB_VLC = LibVlcFactory.factory().log().create();
   }
@@ -127,7 +117,7 @@ public class VideoDemo extends RiftApp  {
       SceneHelpers.renderProceduralSkybox();
     }));
     root.addChild(getScreenNode());
-    root.addChild(getSwingUiNode());
+//    root.addChild(getSwingUiNode());
     root.addChild(getUiNode());
 
     swingTexture = new Texture(GL_TEXTURE_2D);
@@ -151,7 +141,7 @@ public class VideoDemo extends RiftApp  {
 
     player = new MediaPlayerFactory(LIB_VLC).newDirectMediaPlayer(videoTransport, videoTransport);
     player.playMedia(MEDIA_URL);
-    hmd.enableHswDisplay(false);
+//    hmd.enableHswDisplay(false);
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -173,29 +163,27 @@ public class VideoDemo extends RiftApp  {
     R.drawable.ic_chat,
   };
 
-  protected SceneNode getSwingUiNode() {
-    JFrame f = swingContainer.getFrame();
-    JFileChooser fc = new JFileChooser("m:\\Videos\\3D");
+  protected SceneNode f() {
+//    JFrame f = swingContainer.getFrame();
+//    JFileChooser fc = new JFileChooser("m:\\Videos\\3D");
+//    fc.setControlButtonsAreShown(false);
+//    f.add(fc, BorderLayout.CENTER);
+//    JButton button = new JButton("Choose");
+//    button.addActionListener(new ActionListener() {
+//       @Override
+//      public void actionPerformed(ActionEvent e) {
+//         player.playMedia(fc.getSelectedFile().toString());
+//       }
+//    });
+//    JPanel panel = new JPanel();
+//    panel.add(button);
     
-    fc.setControlButtonsAreShown(false);
-    f.add(fc, BorderLayout.CENTER);
-
-    JButton button = new JButton("Choose");
-    button.addActionListener(new ActionListener() {
-       @Override
-      public void actionPerformed(ActionEvent e) {
-         player.playMedia(fc.getSelectedFile().toString());
-       }
-    });
-    JPanel panel = new JPanel();
-    panel.add(button);
-    
-    f.add(panel, BorderLayout.SOUTH);
-    f.pack();
-    f.setLocationRelativeTo(null);
-    f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    f.setVisible(true);
-    f.setSize(600, 400);
+//    f.add(panel, BorderLayout.SOUTH);
+//    f.pack();
+//    f.setLocationRelativeTo(null);
+//    f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//    f.setVisible(true);
+//    f.setSize(600, 400);
 
     MatrixStack mv = MatrixStack.MODELVIEW;
     IndexedGeometry quad = OpenGL.makeTexturedQuad();
@@ -340,85 +328,85 @@ public class VideoDemo extends RiftApp  {
     player.setTime(player.getTime() + (int)(time * 1000));
   }
 
-  @Override
-  protected boolean onKeyboardEvent() {
-    if (swingContainer.onKeyboardEvent()) {
-      return true;
-    }
-    if (super.onKeyboardEvent()) {
-      return true;
-    }
-    // We only care about presses, not releases
-    if (!Keyboard.getEventKeyState()) {
-      return false;
-    }
+//  @Override
+//  protected boolean onKeyboardEvent() {
+//    if (swingContainer.onKeyboardEvent()) {
+//      return true;
+//    }
+//    if (super.onKeyboardEvent()) {
+//      return true;
+//    }
+//    // We only care about presses, not releases
+//    if (!Keyboard.getEventKeyState()) {
+//      return false;
+//    }
+//
+//    switch (Keyboard.getEventKey()) {
+//    case Keyboard.KEY_R:
+//      resetCamera();
+//      return true;
+//    case Keyboard.KEY_S:
+//      swapEyes = !swapEyes;
+//      return true;
+//    case Keyboard.KEY_LEFT:
+//      if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+//        setTimeDelta(-5);
+//      } else {
+//        setTimeDelta(-30);
+//      }
+//      return true;
+//    case Keyboard.KEY_RIGHT:
+//      if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
+//        setTimeDelta(5);
+//      } else {
+//        setTimeDelta(30);
+//      }
+//      return true;
+//
+//    case Keyboard.KEY_UP:
+//      setTimeDelta(5 * 60);
+//      return true;
+//
+//    case Keyboard.KEY_DOWN:
+//      setTimeDelta(-5 * 60);
+//      return true;
+//
+//    case Keyboard.KEY_SPACE:
+//      player.pause();
+//      return true;
+//
+//    }
+//    return false;
+//  }
 
-    switch (Keyboard.getEventKey()) {
-    case Keyboard.KEY_R:
-      resetCamera();
-      return true;
-    case Keyboard.KEY_S:
-      swapEyes = !swapEyes;
-      return true;
-    case Keyboard.KEY_LEFT:
-      if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-        setTimeDelta(-5);
-      } else {
-        setTimeDelta(-30);
-      }
-      return true;
-    case Keyboard.KEY_RIGHT:
-      if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-        setTimeDelta(5);
-      } else {
-        setTimeDelta(30);
-      }
-      return true;
-
-    case Keyboard.KEY_UP:
-      setTimeDelta(5 * 60);
-      return true;
-
-    case Keyboard.KEY_DOWN:
-      setTimeDelta(-5 * 60);
-      return true;
-
-    case Keyboard.KEY_SPACE:
-      player.pause();
-      return true;
-
-    }
-    return false;
-  }
-
-  @Override
-  protected boolean onControllerEvent() {
-    if (super.onControllerEvent()) {
-      return true;
-    }
-
-    Controller c = Controllers.getEventSource();
-    System.out.println(c.getName());
-    int controlIndex = Controllers.getEventControlIndex();
-    if (Controllers.isEventButton()) {
-      boolean buttonState = Controllers.getEventButtonState();
-      System.out.println(c.getButtonName(controlIndex));
-      System.out.println(String.format("%d %d", controlIndex, buttonState ? 1 : 0));
-    }
-    if (Controllers.isEventAxis()) {
-      System.out.println(c.getAxisName(controlIndex));
-      System.out.println(String.format("%d %f", controlIndex, c.getAxisValue(controlIndex)));
-    }
-    if (Controllers.isEventPovX()) {
-      System.out.println(String.format("PovX %d %f", controlIndex, c.getPovX()));
-    }
-
-    if (Controllers.isEventPovY()) {
-      System.out.println(String.format("PovY %d %f", controlIndex, c.getPovY()));
-    }
-
-    return false;
-  }
+//  @Override
+//  protected boolean onControllerEvent() {
+//    if (super.onControllerEvent()) {
+//      return true;
+//    }
+//
+//    Controller c = Controllers.getEventSource();
+//    System.out.println(c.getName());
+//    int controlIndex = Controllers.getEventControlIndex();
+//    if (Controllers.isEventButton()) {
+//      boolean buttonState = Controllers.getEventButtonState();
+//      System.out.println(c.getButtonName(controlIndex));
+//      System.out.println(String.format("%d %d", controlIndex, buttonState ? 1 : 0));
+//    }
+//    if (Controllers.isEventAxis()) {
+//      System.out.println(c.getAxisName(controlIndex));
+//      System.out.println(String.format("%d %f", controlIndex, c.getAxisValue(controlIndex)));
+//    }
+//    if (Controllers.isEventPovX()) {
+//      System.out.println(String.format("PovX %d %f", controlIndex, c.getPovX()));
+//    }
+//
+//    if (Controllers.isEventPovY()) {
+//      System.out.println(String.format("PovY %d %f", controlIndex, c.getPovY()));
+//    }
+//
+//    return false;
+//  }
 
   protected void resetCamera() {
     MatrixStack.MODELVIEW.lookat(
@@ -454,4 +442,5 @@ public class VideoDemo extends RiftApp  {
     root.render();
 
   }
+
 }
