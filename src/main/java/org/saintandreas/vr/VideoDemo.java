@@ -1,5 +1,6 @@
 package org.saintandreas.vr;
 
+import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL14.*;
 import static org.lwjgl.opengl.GL20.*;
@@ -36,7 +37,6 @@ import org.saintandreas.vr.vlc.R;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sun.util.logging.PlatformLogger;
 import uk.co.caprica.vlcj.binding.LibVlc;
 import uk.co.caprica.vlcj.binding.LibVlcFactory;
 import uk.co.caprica.vlcj.player.MediaPlayer;
@@ -54,10 +54,6 @@ public class VideoDemo extends RiftApp  {
     for (Handler h : LogManager.getLogManager().getLogger("").getHandlers()) {
       h.setLevel(Level.FINEST);
     }
-    PlatformLogger focusLog = PlatformLogger.getLogger("java.awt.focus.Component");
-    focusLog.setLevel(PlatformLogger.Level.FINEST);
-    focusLog.info("Info");
-    focusLog.fine("Fine");
 
     ResourceManager.setProvider(new FilesystemResourceProvider(
         new File("C:\\Users\\bdavis\\Git\\OculusRiftExamples\\resources"),
@@ -71,8 +67,8 @@ public class VideoDemo extends RiftApp  {
   // private static final String MEDIA_URL = "http://192.168.0.4/Videos/3D/Gravity.2013.1080p%203D.HDTV.x264.DTS-RARBG.mkv";
   // private static final String MEDIA_URL = "http://192.168.0.4/Videos/Movies/g/Ghost.In.The.Shell.3.Solid.State.Soceity.2006.dvdrip.ac3-atilla82.avi";
   // private static final String MEDIA_URL = "http://192.168.0.4/Videos/3D/TRON%20LEGACY%203D.mkv";
-  private static final String MEDIA_URL = "http://192.168.0.4/Videos/3D/Guardians.of.the.Galaxy.2014.1080p.3D.HSBS.BluRay.x264.YIFY.mp4";
-  // private static final String MEDIA_URL = "http://192.168.0.4/Videos/3D/Man.Of.Steel.3D.2013.1080p.BluRay.Half-OU.DTS.x264-PublicHD.mkv";
+  //private static final String MEDIA_URL = "http://192.168.0.4/Videos/3D/Guardians.of.the.Galaxy.2014.1080p.3D.HSBS.BluRay.x264.YIFY.mp4";
+  private static final String MEDIA_URL = "http://192.168.0.4/Videos/3D/Man.Of.Steel.3D.2013.1080p.BluRay.Half-OU.DTS.x264-PublicHD.mkv";
 
   @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory.getLogger(VideoDemo.class);
@@ -95,8 +91,7 @@ public class VideoDemo extends RiftApp  {
 
   private float videoAspect;
   private boolean swapEyes = false;
-  private StereoscopicMode stereoMode = StereoscopicMode.SIDE_BY_SIDE;
-  private Texture swingTexture;
+  private int stereoMode = 0;
 
 
   static final String HELP =
@@ -120,11 +115,6 @@ public class VideoDemo extends RiftApp  {
 //    root.addChild(getSwingUiNode());
     root.addChild(getUiNode());
 
-    swingTexture = new Texture(GL_TEXTURE_2D);
-    swingTexture.withBound(()->{
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    });
     videoTexture = new Texture(GL_TEXTURE_2D);
     videoTexture.withBound(()->{
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -135,13 +125,12 @@ public class VideoDemo extends RiftApp  {
     videoTransport.setVideoChangedCallback((int width, int height)->{
       videoAspect = (float) width / (float) height;
       taskQueue.add(()->{
-        eyeMeshes = VideoHelper.get3dEyeMeshes(videoAspect, stereoMode);
+        eyeMeshes = VideoHelper.get3dEyeMeshes(videoAspect, StereoscopicMode.values()[stereoMode]);
       });
     });
 
     player = new MediaPlayerFactory(LIB_VLC).newDirectMediaPlayer(videoTransport, videoTransport);
     player.playMedia(MEDIA_URL);
-//    hmd.enableHswDisplay(false);
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -162,53 +151,6 @@ public class VideoDemo extends RiftApp  {
     R.drawable.ic_video,
     R.drawable.ic_chat,
   };
-
-  protected SceneNode f() {
-//    JFrame f = swingContainer.getFrame();
-//    JFileChooser fc = new JFileChooser("m:\\Videos\\3D");
-//    fc.setControlButtonsAreShown(false);
-//    f.add(fc, BorderLayout.CENTER);
-//    JButton button = new JButton("Choose");
-//    button.addActionListener(new ActionListener() {
-//       @Override
-//      public void actionPerformed(ActionEvent e) {
-//         player.playMedia(fc.getSelectedFile().toString());
-//       }
-//    });
-//    JPanel panel = new JPanel();
-//    panel.add(button);
-    
-//    f.add(panel, BorderLayout.SOUTH);
-//    f.pack();
-//    f.setLocationRelativeTo(null);
-//    f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//    f.setVisible(true);
-//    f.setSize(600, 400);
-
-    MatrixStack mv = MatrixStack.MODELVIEW;
-    IndexedGeometry quad = OpenGL.makeTexturedQuad();
-
-    TransformNode transformNode = new TransformNode(()->{
-      mv.translate(new Vector3f(0, OvrLibrary.OVR_DEFAULT_EYE_HEIGHT - 0.25f, -0.3f));
-    }, mv);
-
-
-    transformNode.addChild(new SceneNode( ()->{
-      final Program program = OpenGL.getProgram(
-          ExampleResource.SHADERS_TEXTURED_VS, 
-          ExampleResource.SHADERS_TEXTURED_FS);
-      program.use();
-      swingTexture.bind();
-      quad.bind();
-      mv.withPush(()->{
-        MatrixStack.bindAll(program);
-        quad.draw();
-      });
-      VertexArray.clear();
-      Program.clear();
-    } ));
-    return transformNode; 
-  }
   
   protected SceneNode getUiNode() {
     MatrixStack mv = MatrixStack.MODELVIEW;
@@ -328,56 +270,56 @@ public class VideoDemo extends RiftApp  {
     player.setTime(player.getTime() + (int)(time * 1000));
   }
 
-//  @Override
-//  protected boolean onKeyboardEvent() {
-//    if (swingContainer.onKeyboardEvent()) {
-//      return true;
-//    }
-//    if (super.onKeyboardEvent()) {
-//      return true;
-//    }
-//    // We only care about presses, not releases
-//    if (!Keyboard.getEventKeyState()) {
-//      return false;
-//    }
-//
-//    switch (Keyboard.getEventKey()) {
-//    case Keyboard.KEY_R:
-//      resetCamera();
-//      return true;
-//    case Keyboard.KEY_S:
-//      swapEyes = !swapEyes;
-//      return true;
-//    case Keyboard.KEY_LEFT:
-//      if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-//        setTimeDelta(-5);
-//      } else {
-//        setTimeDelta(-30);
-//      }
-//      return true;
-//    case Keyboard.KEY_RIGHT:
-//      if (Keyboard.isKeyDown(Keyboard.KEY_LSHIFT)) {
-//        setTimeDelta(5);
-//      } else {
-//        setTimeDelta(30);
-//      }
-//      return true;
-//
-//    case Keyboard.KEY_UP:
-//      setTimeDelta(5 * 60);
-//      return true;
-//
-//    case Keyboard.KEY_DOWN:
-//      setTimeDelta(-5 * 60);
-//      return true;
-//
-//    case Keyboard.KEY_SPACE:
-//      player.pause();
-//      return true;
-//
-//    }
-//    return false;
-//  }
+  @Override
+  protected void onKeyboardEvent(int key, int scancode, int action, int mods) {
+    if (action == GLFW_RELEASE ) {
+      switch (key) {
+      case GLFW_KEY_R:
+        resetCamera();
+        return;
+        
+      case GLFW_KEY_3:
+        stereoMode = (stereoMode + 1) % StereoscopicMode.values().length;
+        eyeMeshes = VideoHelper.get3dEyeMeshes(videoAspect, StereoscopicMode.values()[stereoMode]);
+        return;
+        
+      case GLFW_KEY_S:
+        swapEyes = !swapEyes;
+        return;
+
+      case GLFW_KEY_LEFT:
+        if (0 != (mods & GLFW_MOD_SHIFT)) {
+          setTimeDelta(-5);
+        } else {
+          setTimeDelta(-30);
+        }
+        return;
+      case GLFW_KEY_RIGHT:
+        if (0 != (mods & GLFW_MOD_SHIFT)) {
+          setTimeDelta(5);
+        } else {
+          setTimeDelta(30);
+        }
+        return;
+
+      case GLFW_KEY_UP:
+        setTimeDelta(5 * 60);
+        return;
+
+      case GLFW_KEY_DOWN:
+        setTimeDelta(-5 * 60);
+        return;
+      case GLFW_KEY_SPACE:
+        player.pause();
+        return;
+
+      default:
+        break;
+      }
+    }
+    super.onKeyboardEvent(key, scancode, action, mods);
+  }
+
 
 //  @Override
 //  protected boolean onControllerEvent() {
@@ -424,7 +366,6 @@ public class VideoDemo extends RiftApp  {
       task.run();
     }
 
-    swingContainer.updateTexture(swingTexture);
     videoTransport.updateTexture(videoTexture);
   }
 

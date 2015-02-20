@@ -1,6 +1,7 @@
 package org.saintandreas.vr;
 
 import static com.oculusvr.capi.OvrLibrary.ovrDistortionCaps.*;
+import static com.oculusvr.capi.OvrLibrary.ovrHmdCaps.*;
 import static com.oculusvr.capi.OvrLibrary.ovrHmdType.*;
 import static com.oculusvr.capi.OvrLibrary.ovrRenderAPIType.*;
 import static com.oculusvr.capi.OvrLibrary.ovrTrackingCaps.*;
@@ -47,7 +48,6 @@ public abstract class RiftApp extends LwjglApp {
       new Matrix4f[2];
   private int frameCount = -1;
   private int currentEye;
-
 
 
   private static Hmd openFirstHmd() {
@@ -112,10 +112,9 @@ public abstract class RiftApp extends LwjglApp {
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
     glfwWindowHint(GLFW_DECORATED, 0);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    // Without this line we get
-    // FATAL (86): NSGL: The targeted version of OS X only supports OpenGL 3.2 and later versions if they are forward-compatible
-
     if (osName.startsWith("Mac") || osName.startsWith("Darwin")) {
+      // Without this line we get
+      // FATAL (86): NSGL: The targeted version of OS X only supports OpenGL 3.2 and later versions if they are forward-compatible
       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     } else {
@@ -123,7 +122,6 @@ public abstract class RiftApp extends LwjglApp {
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
     }
   }
-
 
   public interface User32 extends Library {
      User32 INSTANCE = (User32) Native.loadLibrary("user32", User32.class);
@@ -139,6 +137,14 @@ public abstract class RiftApp extends LwjglApp {
     Rectangle targetRect = new Rectangle(
         hmd.WindowsPos.x, hmd.WindowsPos.y, 
         hmd.Resolution.w, hmd.Resolution.h);
+    
+    boolean directHmdMode = (0 == (ovrHmdCap_ExtendDesktop & hmd.HmdCaps));
+
+    if (directHmdMode) {
+      targetRect.x = 0;
+      targetRect.y = -1080;
+    }
+
     setupDisplay(targetRect);
 
     Pointer hwnd = User32.INSTANCE.GetForegroundWindow(); // then you can call it!
