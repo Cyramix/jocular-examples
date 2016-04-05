@@ -16,18 +16,19 @@ import org.saintandreas.math.Matrix4f;
 
 import com.oculusvr.capi.EyeRenderDesc;
 import com.oculusvr.capi.FovPort;
-import com.oculusvr.capi.GLTexture;
 import com.oculusvr.capi.Hmd;
 import com.oculusvr.capi.HmdDesc;
 import com.oculusvr.capi.LayerEyeFov;
+import com.oculusvr.capi.MirrorTextureDesc;
 import com.oculusvr.capi.OvrLibrary;
 import com.oculusvr.capi.OvrMatrix4f;
 import com.oculusvr.capi.OvrRecti;
 import com.oculusvr.capi.OvrSizei;
 import com.oculusvr.capi.OvrVector3f;
 import com.oculusvr.capi.Posef;
-import com.oculusvr.capi.SwapTextureSet;
+import com.oculusvr.capi.TextureSwapChainDesc;
 import com.oculusvr.capi.ViewScaleDesc;
+import com.sun.jna.Pointer;
 
 public abstract class RiftApp extends LwjglApp {
   protected final Hmd hmd;
@@ -40,8 +41,8 @@ public abstract class RiftApp extends LwjglApp {
   private final ViewScaleDesc viewScaleDesc = new ViewScaleDesc();
   private FrameBuffer frameBuffer = null;
   private int frameCount = -1;
-  private SwapTextureSet swapTexture = null;
-  private GLTexture mirrorTexture = null;
+  private Pointer swapTexture = null;
+  private Pointer mirrorTexture = null;
   private LayerEyeFov layer = new LayerEyeFov();
 
   public RiftApp() {
@@ -53,17 +54,22 @@ public abstract class RiftApp extends LwjglApp {
       throw new IllegalStateException(e);
     }
 
-    hmd = Hmd.create();
-    if (null == hmd) {
-      throw new IllegalStateException("Unable to initialize HMD");
-    }
+    Hmd tempHmd;
+//    try {
+        tempHmd = Hmd.create();
+//    } catch (IllegalStateException e){
+//        tempHmd = Hmd.createDebug(ovrHmdType.ovrHmd_DK2);
+//    }
+    hmd = tempHmd;
+    
     hmdDesc = hmd.getDesc();
 
-    hmd.configureTracking();
+    Pointer version = OvrLibrary.INSTANCE.ovr_GetVersionString();
+    System.out.println(version.getString(0)); 
+      
     for (int eye = 0; eye < 2; ++eye) {
       fovPorts[eye] = hmdDesc.DefaultEyeFov[eye];
-      OvrMatrix4f m = Hmd.getPerspectiveProjection(fovPorts[eye], 0.1f, 1000000f, ovrProjection_RightHanded
-          | ovrProjection_ClipRangeOpenGL);
+      OvrMatrix4f m = Hmd.getPerspectiveProjection(fovPorts[eye], 0.1f, 1000000f, ovrProjection_ClipRangeOpenGL);
       projections[eye] = RiftUtils.toMatrix4f(m);
       textureSizes[eye] = hmd.getFovTextureSize(eye, fovPorts[eye], 1.0f);
     }
@@ -82,8 +88,8 @@ public abstract class RiftApp extends LwjglApp {
 
   @Override
   protected final void setupDisplay() {
-    width = hmdDesc.Resolution.w / 4;
-    height = hmdDesc.Resolution.h / 4;
+    width = hmdDesc.Resolution.w;
+    height = hmdDesc.Resolution.h;
     setupDisplay(new Rectangle(100, 100, width, height));
   }
 
@@ -94,8 +100,22 @@ public abstract class RiftApp extends LwjglApp {
     OvrSizei doubleSize = new OvrSizei();
     doubleSize.w = textureSizes[0].w + textureSizes[1].w;
     doubleSize.h = textureSizes[0].h;
-    swapTexture = hmd.createSwapTexture(doubleSize, GL_RGBA);
-    mirrorTexture = hmd.createMirrorTexture(new OvrSizei(width, height), GL_RGBA);
+    
+    TextureSwapChainDesc textureSwapChainDesc = new TextureSwapChainDesc();
+    textureSwapChainDesc.Type = OvrLibrary.ovrTextureType.ovrTexture_2D;
+    textureSwapChainDesc.Format = OvrLibrary.ovrTextureFormat.OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+    textureSwapChainDesc.Width = doubleSize.w;
+    textureSwapChainDesc.Height = doubleSize.h;
+    
+    
+    swapTexture = hmd.createSwapTextureChain(textureSwapChainDesc);
+    
+    MirrorTextureDesc mirrorDesc = new MirrorTextureDesc();
+    mirrorDesc.Format = OvrLibrary.ovrTextureFormat.OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+    mirrorDesc.Width = width;
+    mirrorDesc.Height = height;
+    
+    mirrorTexture = hmd.createMirrorTexture(mirrorDesc);
 
     layer.Header.Type = OvrLibrary.ovrLayerType.ovrLayerType_EyeFov;
     layer.ColorTexure[0] = swapTexture;
@@ -119,8 +139,8 @@ public abstract class RiftApp extends LwjglApp {
 
   @Override
   public final void drawFrame() {
-    width = hmdDesc.Resolution.w / 4;
-    height = hmdDesc.Resolution.h / 4;
+    width = hmdDesc.Resolution.w;
+    height = hmdDesc.Resolution.h;
 
     ++frameCount;
     Posef eyePoses[] = hmd.getEyePoses(frameCount, eyeOffsets);
@@ -128,8 +148,9 @@ public abstract class RiftApp extends LwjglApp {
 
     MatrixStack pr = MatrixStack.PROJECTION;
     MatrixStack mv = MatrixStack.MODELVIEW;
-    GLTexture texture = swapTexture.getTexture(swapTexture.CurrentIndex);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.ogl.TexId, 0);
+    int texture = hmd.getSwapTextureChainBuffer(swapTexture, hmd.getSwapTextureChainCurrentIndex(swapTexture));
+    
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
     for (int eye = 0; eye < 2; ++eye) {
       OvrRecti vp = layer.Viewport[eye];
       glScissor(vp.Pos.x, vp.Pos.y, vp.Size.w, vp.Size.h);
@@ -145,19 +166,19 @@ public abstract class RiftApp extends LwjglApp {
       renderScene();
       mv.pop();
     }
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.ogl.TexId, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
         frameBuffer.deactivate();
 
+    hmd.commitTextureSwapChain(swapTexture);
+    
     hmd.submitFrame(frameCount, layer);
-    swapTexture.CurrentIndex++;
-    swapTexture.CurrentIndex %= swapTexture.TextureCount;
 
     // FIXME Copy the layer to the main window using a mirror texture
     glScissor(0, 0, width, height);
     glViewport(0, 0, width, height);
     glClearColor(0.5f, 0.5f, System.currentTimeMillis() % 1000 / 1000.0f, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    SceneHelpers.renderTexturedQuad(mirrorTexture.ogl.TexId);
+    SceneHelpers.renderTexturedQuad(hmd.getMirrorTextureBuffer(mirrorTexture));
   }
 
   @Override
