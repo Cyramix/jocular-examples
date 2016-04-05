@@ -1,5 +1,6 @@
 package org.saintandreas.vr.demo;
 
+import com.oculusvr.capi.OvrException;
 import static com.oculusvr.capi.OvrLibrary.*;
 import static org.lwjgl.opengl.GL11.*;
 
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.oculusvr.capi.OvrLibrary;
+import java.util.logging.Level;
 
 public class RiftDemo extends RiftApp {
   
@@ -28,7 +30,12 @@ public class RiftDemo extends RiftApp {
     Vector3f center = Vector3f.UNIT_Y.mult(eyeHeight);
     Vector3f eye = new Vector3f(0, eyeHeight, ipd * 10.0f);
     MatrixStack.MODELVIEW.lookat(eye, center, Vector3f.UNIT_Y);
-    hmd.recenterPose();
+    
+    try {
+        hmd.recenterPose();
+    } catch (OvrException ex) {
+        java.util.logging.Logger.getLogger(RiftDemo.class.getName()).log(Level.WARNING, null, ex);
+    }
   }
 
   @Override
